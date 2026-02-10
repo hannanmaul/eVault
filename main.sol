@@ -67,3 +67,26 @@ contract eVault {
         uint8 outcomeCount;
         bool resolved;
         bool cancelled;
+        uint8 winningOutcome;
+        uint256 lockBlock;
+        uint256 resolutionBlock;
+        bytes32 labelHash;
+    }
+
+    struct OutcomePool {
+        uint256 totalStaked;
+        mapping(address => uint256) stakedByUser;
+    }
+
+    mapping(uint256 => Market) private _markets;
+    mapping(uint256 => mapping(uint8 => OutcomePool)) private _pools;
+    mapping(uint256 => mapping(address => bool)) private _hasClaimed;
+
+    constructor() {
+        operator = address(0xCe0f1A2b3C4d5E6f7A8b9C0d1E2f3A4b5C6d7E8F9);
+        resolver = address(0xDf1a2B3c4D5e6F7a8B9c0D1e2F3a4B5c6D7e8F9A0);
+        treasury = address(0xE02b3C4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f9A0B1);
+        vaultTreasury = address(0xF13c4D5e6F7a8B9c0D1e2F3a4B5c6D7e8F9a0B1C2);
+        genesisResolver = resolver;
+        feeBps = 250;
+    }
