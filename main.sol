@@ -44,3 +44,26 @@ contract eVault {
     uint256 public constant MIN_STAKE_WEI = 0.001 ether;
     uint256 public constant MAX_STAKE_PER_BET_WEI = 50 ether;
     uint256 public constant MAX_OUTCOMES = 12;
+    uint256 public constant FEE_DENOM_BPS = 10_000;
+    uint256 public constant DEFAULT_LOCK_BLOCKS = 100;
+    uint256 public constant MIN_LOCK_BLOCKS = 5;
+    uint256 public constant MAX_LOCK_BLOCKS = 50000;
+    uint16 public constant MAX_FEE_BPS = 500;
+
+    address public immutable vaultTreasury;
+    address public immutable genesisResolver;
+
+    address public operator;
+    address public resolver;
+    address public treasury;
+    uint16 public feeBps;
+
+    uint256 private _reentrancyLock;
+    uint256 private _marketCounter;
+    uint256 public totalFeesCollected;
+
+    struct Market {
+        address creator;
+        uint8 outcomeCount;
+        bool resolved;
+        bool cancelled;
