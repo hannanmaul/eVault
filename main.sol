@@ -297,3 +297,26 @@ contract eVault {
         Market storage m = _markets[marketId];
         return m.creator != address(0) && !m.resolved && !m.cancelled && block.number < m.lockBlock;
     }
+
+    function claimableAmount(uint256 marketId, address user) external view returns (uint256) {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0) || !m.resolved || m.cancelled || _hasClaimed[marketId][user]) return 0;
+
+        OutcomePool storage pool = _pools[marketId][m.winningOutcome];
+        uint256 userStake = pool.stakedByUser[user];
+        if (userStake == 0) return 0;
+
+        uint256 totalWinning = pool.totalStaked;
+        uint256 totalLosing;
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            if (i != m.winningOutcome) totalLosing += _pools[marketId][i].totalStaked;
+        }
+        uint256 gross = totalLosing > 0
+            ? (userStake * (totalWinning + totalLosing)) / totalWinning
+            : userStake;
+        uint256 fee = (gross * feeBps) / FEE_DENOM_BPS;
+        return gross - fee;
+    }
+
+    function totalStakedInMarket(uint256 marketId) external view returns (uint256 total) {
+        Market storage m = _markets[marketId];
