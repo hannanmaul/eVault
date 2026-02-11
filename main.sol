@@ -90,3 +90,26 @@ contract eVault {
         genesisResolver = resolver;
         feeBps = 250;
     }
+
+    modifier onlyOperator() {
+        if (msg.sender != operator) revert eVault_NotOperator();
+        _;
+    }
+
+    modifier onlyResolver() {
+        if (msg.sender != resolver) revert eVault_NotResolver();
+        _;
+    }
+
+    modifier nonReentrant() {
+        if (_reentrancyLock != 0) revert eVault_Reentrancy();
+        _reentrancyLock = 1;
+        _;
+        _reentrancyLock = 0;
+    }
+
+    function createMarket(
+        uint8 outcomeCount,
+        uint256 lockBlock,
+        bytes32 labelHash
+    ) external onlyOperator returns (uint256 marketId) {
