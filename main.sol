@@ -251,3 +251,26 @@ contract eVault {
         uint16 prev = feeBps;
         feeBps = newBps;
         emit FeeBpsUpdated(prev, newBps);
+    }
+
+    function getMarket(uint256 marketId) external view returns (
+        address creator,
+        uint8 outcomeCount,
+        bool resolved,
+        bool cancelled,
+        uint8 winningOutcome,
+        uint256 lockBlock,
+        uint256 resolutionBlock,
+        bytes32 labelHash
+    ) {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        return (
+            m.creator,
+            m.outcomeCount,
+            m.resolved,
+            m.cancelled,
+            m.winningOutcome,
+            m.lockBlock,
+            m.resolutionBlock,
+            m.labelHash
