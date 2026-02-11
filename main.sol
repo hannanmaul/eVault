@@ -113,3 +113,26 @@ contract eVault {
         uint256 lockBlock,
         bytes32 labelHash
     ) external onlyOperator returns (uint256 marketId) {
+        if (outcomeCount < 2 || outcomeCount > MAX_OUTCOMES) revert eVault_OverOutcomeLimit();
+        uint256 effectiveLock = lockBlock == 0 ? block.number + DEFAULT_LOCK_BLOCKS : lockBlock;
+        if (effectiveLock <= block.number) revert eVault_LockNotReached();
+        if (effectiveLock - block.number < MIN_LOCK_BLOCKS) revert eVault_LockOutOfRange();
+        if (effectiveLock - block.number > MAX_LOCK_BLOCKS) revert eVault_LockOutOfRange();
+
+        marketId = ++_marketCounter;
+        _markets[marketId] = Market({
+            creator: msg.sender,
+            outcomeCount: outcomeCount,
+            resolved: false,
+            cancelled: false,
+            winningOutcome: 0,
+            lockBlock: effectiveLock,
+            resolutionBlock: 0,
+            labelHash: labelHash
+        });
+        emit MarketCreated(marketId, msg.sender, outcomeCount, effectiveLock, labelHash);
+        return marketId;
+    }
+
+    function stake(uint256 marketId, uint8 outcomeIndex) external payable nonReentrant {
+        Market storage m = _markets[marketId];
