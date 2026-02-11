@@ -320,3 +320,26 @@ contract eVault {
 
     function totalStakedInMarket(uint256 marketId) external view returns (uint256 total) {
         Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            total += _pools[marketId][i].totalStaked;
+        }
+    }
+
+    function getUserStakeInMarket(uint256 marketId, address user) external view returns (uint256 total) {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            total += _pools[marketId][i].stakedByUser[user];
+        }
+    }
+
+    function getRefundAmount(uint256 marketId, address user) external view returns (uint256) {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0) || !m.cancelled) return 0;
+        uint256 sum;
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            sum += _pools[marketId][i].stakedByUser[user];
+        }
+        return sum;
+    }
