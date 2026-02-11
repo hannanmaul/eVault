@@ -182,3 +182,26 @@ contract eVault {
         uint256 userStake = pool.stakedByUser[msg.sender];
         if (userStake == 0) revert eVault_NothingToClaim();
 
+        uint256 totalWinning = pool.totalStaked;
+        uint256 totalLosing;
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            if (i != m.winningOutcome) totalLosing += _pools[marketId][i].totalStaked;
+        }
+
+        _hasClaimed[marketId][msg.sender] = true;
+        pool.stakedByUser[msg.sender] = 0;
+
+        uint256 gross = totalLosing > 0
+            ? (userStake * (totalWinning + totalLosing)) / totalWinning
+            : userStake;
+        uint256 fee = (gross * feeBps) / FEE_DENOM_BPS;
+        uint256 net = gross - fee;
+        totalFeesCollected += fee;
+
+        (bool sent,) = msg.sender.call{ value: net }("");
+        require(sent, "eVault: claim send failed");
+        if (fee > 0 && treasury != address(0)) {
+            (bool feeSent,) = treasury.call{ value: fee }("");
+            require(feeSent, "eVault: fee send failed");
+        }
+        emit Claimed(marketId, msg.sender, net);
