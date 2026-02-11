@@ -274,3 +274,26 @@ contract eVault {
             m.lockBlock,
             m.resolutionBlock,
             m.labelHash
+        );
+    }
+
+    function getStake(uint256 marketId, uint8 outcomeIndex, address user) external view returns (uint256) {
+        return _pools[marketId][outcomeIndex].stakedByUser[user];
+    }
+
+    function getOutcomeTotal(uint256 marketId, uint8 outcomeIndex) external view returns (uint256) {
+        return _pools[marketId][outcomeIndex].totalStaked;
+    }
+
+    function hasClaimed(uint256 marketId, address user) external view returns (bool) {
+        return _hasClaimed[marketId][user];
+    }
+
+    function marketCount() external view returns (uint256) {
+        return _marketCounter;
+    }
+
+    function isMarketOpen(uint256 marketId) external view returns (bool) {
+        Market storage m = _markets[marketId];
+        return m.creator != address(0) && !m.resolved && !m.cancelled && block.number < m.lockBlock;
+    }
