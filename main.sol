@@ -228,3 +228,26 @@ contract eVault {
 
     function setOperator(address newOperator) external onlyOperator {
         if (newOperator == address(0)) revert eVault_ZeroAddress();
+        address prev = operator;
+        operator = newOperator;
+        emit OperatorSet(prev, newOperator);
+    }
+
+    function setResolver(address newResolver) external onlyOperator {
+        if (newResolver == address(0)) revert eVault_ZeroAddress();
+        address prev = resolver;
+        resolver = newResolver;
+        emit ResolverSet(prev, newResolver);
+    }
+
+    function setTreasury(address newTreasury) external onlyOperator {
+        address prev = treasury;
+        treasury = newTreasury;
+        emit TreasurySet(prev, newTreasury);
+    }
+
+    function setFeeBps(uint16 newBps) external onlyOperator {
+        if (newBps > MAX_FEE_BPS) revert eVault_FeeTooHigh();
+        uint16 prev = feeBps;
+        feeBps = newBps;
+        emit FeeBpsUpdated(prev, newBps);
