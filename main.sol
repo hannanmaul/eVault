@@ -136,3 +136,26 @@ contract eVault {
 
     function stake(uint256 marketId, uint8 outcomeIndex) external payable nonReentrant {
         Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        if (m.resolved || m.cancelled) revert eVault_MarketNotOpen();
+        if (block.number >= m.lockBlock) revert eVault_MarketNotOpen();
+        if (outcomeIndex >= m.outcomeCount) revert eVault_InvalidOutcome();
+        if (msg.value == 0) revert eVault_ZeroStake();
+        if (msg.value < MIN_STAKE_WEI) revert eVault_UnderMinStake();
+        if (msg.value > MAX_STAKE_PER_BET_WEI) revert eVault_OverMaxStake();
+
+        OutcomePool storage pool = _pools[marketId][outcomeIndex];
+        pool.totalStaked += msg.value;
+        pool.stakedByUser[msg.sender] += msg.value;
+
+        emit Staked(marketId, msg.sender, outcomeIndex, msg.value);
+    }
+
+    function resolve(uint256 marketId, uint8 winningOutcome) external onlyResolver nonReentrant {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        if (m.resolved || m.cancelled) revert eVault_AlreadyResolved();
+        if (block.number < m.lockBlock) revert eVault_LockNotReached();
+        if (winningOutcome >= m.outcomeCount) revert eVault_InvalidOutcome();
+
+        m.resolved = true;
