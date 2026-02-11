@@ -205,3 +205,26 @@ contract eVault {
             require(feeSent, "eVault: fee send failed");
         }
         emit Claimed(marketId, msg.sender, net);
+    }
+
+    function refund(uint256 marketId) external nonReentrant {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        if (!m.cancelled) revert eVault_MarketNotResolved();
+
+        uint256 totalRefund;
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            uint256 u = _pools[marketId][i].stakedByUser[msg.sender];
+            if (u > 0) {
+                _pools[marketId][i].stakedByUser[msg.sender] = 0;
+                _pools[marketId][i].totalStaked -= u;
+                totalRefund += u;
+            }
+        }
+        if (totalRefund == 0) revert eVault_NothingToClaim();
+        (bool sent,) = msg.sender.call{ value: totalRefund }("");
+        require(sent, "eVault: refund send failed");
+    }
+
+    function setOperator(address newOperator) external onlyOperator {
+        if (newOperator == address(0)) revert eVault_ZeroAddress();
