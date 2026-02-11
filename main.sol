@@ -159,3 +159,26 @@ contract eVault {
         if (winningOutcome >= m.outcomeCount) revert eVault_InvalidOutcome();
 
         m.resolved = true;
+        m.winningOutcome = winningOutcome;
+        m.resolutionBlock = block.number;
+        emit Resolved(marketId, winningOutcome, block.number);
+    }
+
+    function cancelMarket(uint256 marketId) external onlyOperator {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        if (m.resolved) revert eVault_AlreadyResolved();
+        m.cancelled = true;
+        emit MarketCancelled(marketId);
+    }
+
+    function claim(uint256 marketId) external nonReentrant {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        if (!m.resolved || m.cancelled) revert eVault_MarketNotResolved();
+        if (_hasClaimed[marketId][msg.sender]) revert eVault_AlreadyClaimed();
+
+        OutcomePool storage pool = _pools[marketId][m.winningOutcome];
+        uint256 userStake = pool.stakedByUser[msg.sender];
+        if (userStake == 0) revert eVault_NothingToClaim();
+
