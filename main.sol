@@ -343,3 +343,26 @@ contract eVault {
         }
         return sum;
     }
+
+    function getMarketIdAt(uint256 index) external view returns (uint256) {
+        if (index >= _marketCounter) revert eVault_InvalidMarket();
+        return index + 1;
+    }
+
+    function getMarketIdsInRange(uint256 fromId, uint256 toId) external view returns (uint256[] memory ids) {
+        if (fromId > toId || toId > _marketCounter) revert eVault_InvalidMarket();
+        uint256 n = toId - fromId + 1;
+        ids = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            ids[i] = fromId + i;
+        }
+    }
+
+    function getOutcomeTotals(uint256 marketId) external view returns (uint256[] memory totals) {
+        Market storage m = _markets[marketId];
+        if (m.creator == address(0)) revert eVault_InvalidMarket();
+        totals = new uint256[](m.outcomeCount);
+        for (uint8 i = 0; i < m.outcomeCount; i++) {
+            totals[i] = _pools[marketId][i].totalStaked;
+        }
+    }
